@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora Superbet</title>
+
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 0;
+      background: #f5f5f5;
+      color: #333;
+    }
+    header {
+      background: #0f172a;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    main {
+      max-width: 1100px;
+      margin: 20px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    h2 { color: #0f172a; }
+    input {
+      width: 100%;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #e5e7eb;
+      padding: 8px;
+      text-align: center;
+    }
+    th { background: #f1f5f9; }
+    button {
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      font-size: 15px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 10px;
+    }
+    .add { background: #16a34a; color: white; }
+    .calc { background: #2563eb; color: white; }
+    .remove { background: #dc2626; color: white; }
+    .resultado {
+      margin-top: 20px;
+      padding: 15px;
+      background: #ecfeff;
+      border: 1px solid #67e8f9;
+      border-radius: 8px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      table, thead, tbody, th, td, tr { display: block; }
+      thead { display: none; }
+      tr {
+        margin-bottom: 15px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 10px;
+      }
+      td { border: none; text-align: left; }
+      td::before { font-weight: bold; display: block; }
+      td:nth-child(1)::before { content: "Odd #"; }
+      td:nth-child(2)::before { content: "Odd"; }
+      td:nth-child(3)::before { content: "Stake"; }
+      td:nth-child(4)::before { content: "Lucro"; }
+      td:nth-child(5)::before { content: "Ação"; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Modo Superbet</h1>
+    <p>Distribuição automática de stake para lucro garantido</p>
+  </header>
+
+  <main>
+    <h2>Valor total investido (R$)</h2>
+    <input type="number" id="totalStake" placeholder="Ex: 1000" />
+
+    <h2>Odds</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Odd</th>
+          <th>Stake sugerida</th>
+          <th>Lucro</th>
+          <th>Ação</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaOdds"></tbody>
+    </table>
+
+    <button class="add" onclick="addOdd()">➕ Adicionar odd</button>
+    <button class="calc" onclick="calcularSuperbet()">Calcular Superbet</button>
+
+    <div class="resultado" id="resultado"></div>
+  </main>
+
+  <script>
+    const tabela = document.getElementById('tabelaOdds');
+    let count = 0;
+
+    function addOdd() {
+      count++;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${count}</td>
+        <td><input type="number" step="0.01" class="odd" placeholder="Ex: 2.10"></td>
+        <td class="stake">-</td>
+        <td class="lucro">-</td>
+        <td><button class="remove" onclick="this.closest('tr').remove()">Remover</button></td>
+      `;
+      tabela.appendChild(tr);
+    }
+
+    addOdd();
+    addOdd();
+
+    function calcularSuperbet() {
+      const totalStake = parseFloat(document.getElementById('totalStake').value);
+      const rows = document.querySelectorAll('#tabelaOdds tr');
+      const odds = [];
+
+      rows.forEach(row => {
+        const odd = parseFloat(row.querySelector('.odd').value);
+        if (!isNaN(odd)) odds.push({ row, odd });
+      });
+
+      if (odds.length < 2 || isNaN(totalStake)) return;
+
+      const somaInversos = odds.reduce((s, o) => s + (1 / o.odd), 0);
+
+      if (somaInversos >= 1) {
+        document.getElementById('resultado').innerText = '❌ Não é Superbet (soma ≥ 1)';
+        return;
+      }
+
+      let lucroFinal = 0;
+
+      odds.forEach(o => {
+        const stake = totalStake * ((1 / o.odd) / somaInversos);
+        const retorno = stake * o.odd;
+        lucroFinal = retorno - totalStake;
+
+        o.row.querySelector('.stake').innerText = 'R$ ' + stake.toFixed(2);
+        o.row.querySelector('.lucro').innerText = 'R$ ' + lucroFinal.toFixed(2);
+      });
+
+      document.getElementById('resultado').innerText = `✅ SUPERBET ATIVA | Lucro garantido: R$ ${lucroFinal.toFixed(2)}`;
+    }
+  </script>
+</body>
+</html>
