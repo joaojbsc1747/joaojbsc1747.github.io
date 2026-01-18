@@ -26,8 +26,8 @@ main {
 }
 label {
   font-weight: bold;
-  display: block;
   margin-bottom: 6px;
+  display: block;
 }
 input {
   width: 100%;
@@ -68,8 +68,8 @@ button {
   tr {
     border: 1px solid #ddd;
     border-radius: 8px;
-    margin-bottom: 10px;
     padding: 10px;
+    margin-bottom: 10px;
   }
 }
 </style>
@@ -137,12 +137,14 @@ function atualizar() {
   });
 }
 
+/* 🔹 3 odds padrão */
+addOdd();
 addOdd();
 addOdd();
 
 function calcular() {
   const total = parseFloat(document.getElementById("total").value);
-  if (!total) return;
+  if (!total || total <= 0) return;
 
   const rows = [...tabela.querySelectorAll("tr")];
   const odds = [];
@@ -160,10 +162,12 @@ function calcular() {
 
   odds.forEach(o => {
     const investimento = retornoComum / o.odd;
-    const retorno = investimento * o.odd;
 
-    o.row.querySelector(".invest").innerText = "R$ " + investimento.toFixed(2);
-    o.row.querySelector(".retorno").innerText = "R$ " + retorno.toFixed(2);
+    o.row.querySelector(".invest").innerText =
+      "R$ " + investimento.toFixed(2);
+
+    o.row.querySelector(".retorno").innerText =
+      "R$ " + retornoComum.toFixed(2);
 
     const lucroEl = o.row.querySelector(".lucro");
     lucroEl.innerText = "R$ " + lucro.toFixed(2);
