@@ -143,4 +143,44 @@ function addOdd() {
 }
 
 function atualizarIndices() {
-  [...tabela.quer]()
+  [...tabela.querySelectorAll("tr")].forEach((tr, i) => {
+    tr.querySelector(".indice").innerText = (i + 1) + "º";
+  });
+}
+
+addOdd();
+addOdd();
+
+function calcular() {
+  const total = parseFloat(document.getElementById("totalStake").value);
+  if (!total) return;
+
+  const rows = [...tabela.querySelectorAll("tr")];
+  const odds = [];
+
+  rows.forEach(row => {
+    const odd = parseFloat(row.children[1].querySelector("input").value);
+    if (odd && odd > 1) {
+      odds.push({ row, odd });
+    }
+  });
+
+  if (odds.length === 0) return;
+
+  const soma = odds.reduce((acc, o) => acc + (1 / o.odd), 0);
+
+  odds.forEach(o => {
+    const stake = total * ((1 / o.odd) / soma);
+    const retorno = stake * o.odd;
+    const lucro = retorno - total;
+
+    o.row.querySelector(".stake").innerText = "R$ " + stake.toFixed(2);
+
+    const lucroEl = o.row.querySelector(".lucro");
+    lucroEl.innerText = "R$ " + lucro.toFixed(2);
+    lucroEl.className = lucro >= 0 ? "lucro-positivo" : "lucro-negativo";
+  });
+}
+</script>
+</body>
+</html>
