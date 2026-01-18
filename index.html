@@ -24,16 +24,21 @@ main {
   padding: 20px;
   border-radius: 10px;
 }
+.inputs-topo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
 input {
   width: 100%;
   padding: 10px;
-  margin-bottom: 8px;
   border-radius: 6px;
   border: 1px solid #ccc;
 }
 table {
   width: 100%;
   border-collapse: collapse;
+  margin-top: 15px;
 }
 th, td {
   border: 1px solid #e5e7eb;
@@ -55,16 +60,17 @@ button {
 .add { background: #16a34a; color: white; }
 .remove { background: #dc2626; color: white; }
 
-.resultado {
-  margin-top: 20px;
-  padding: 15px;
-  background: #ecfeff;
-  border-radius: 8px;
+.lucro-positivo {
+  color: green;
   font-weight: bold;
-  text-align: center;
+}
+.lucro-negativo {
+  color: red;
+  font-weight: bold;
 }
 
 @media (max-width: 768px) {
+  .inputs-topo { grid-template-columns: 1fr; }
   table, thead, tbody, th, td, tr { display: block; }
   thead { display: none; }
   tr {
@@ -73,10 +79,6 @@ button {
     padding: 10px;
     margin-bottom: 10px;
   }
-  td::before {
-    font-weight: bold;
-    display: block;
-  }
 }
 </style>
 </head>
@@ -84,19 +86,20 @@ button {
 <body>
 <header>
   <h1>Calculadora de Odds</h1>
-  <p>Ajuste percentual e cálculo automático</p>
+  <p>Distribuição automática com lucro estimado</p>
 </header>
 
 <main>
-  <h3>Total investido (R$)</h3>
-  <input type="number" id="totalStake" placeholder="Ex: 1000" oninput="calcular()">
+  <div class="inputs-topo">
+    <input id="totalStake" placeholder="Total Investido (R$)" oninput="formatMoney(this); calcular()">
+    <input id="lucroTotal" placeholder="Lucro Total Desejado (R$)" oninput="formatMoney(this); calcular()">
+  </div>
 
   <table>
     <thead>
       <tr>
+        <th>#</th>
         <th>Odd</th>
-        <th>% Ajuste</th>
-        <th>Odd Ajustada</th>
         <th>Stake</th>
         <th>Lucro Estimado</th>
         <th>Ação</th>
@@ -106,12 +109,16 @@ button {
   </table>
 
   <button class="add" onclick="addOdd()">➕ Adicionar odd</button>
-
-  <div class="resultado" id="resultado"></div>
 </main>
 
 <script>
 const tabela = document.getElementById("tabela");
+
+function formatMoney(input) {
+  let v = input.value.replace(/\D/g, "");
+  if (!v) return;
+  input.value = (parseInt(v) / 100).toFixed(2);
+}
 
 function formatOdd(input) {
   let v = input.value.replace(/\D/g, "");
@@ -122,14 +129,20 @@ function formatOdd(input) {
 function addOdd() {
   const tr = document.createElement("tr");
   tr.innerHTML = `
-    <td><input oninput="formatOdd(this); calcular()" class="odd"></td>
-    <td><input type="number" value="0" oninput="calcular()"></td>
-    <td class="oddFinal">-</td>
+    <td class="indice"></td>
+    <td><input oninput="formatOdd(this); calcular()"></td>
     <td class="stake">-</td>
     <td class="lucro">-</td>
     <td><button class="remove" onclick="this.closest('tr').remove(); calcular()">X</button></td>
   `;
   tabela.appendChild(tr);
+  atualizarIndices();
+}
+
+function atualizarIndices() {
+  [...tabela.querySelectorAll("tr")].forEach((tr, i) => {
+    tr.querySelector(".indice").innerText = (i + 1) + "º";
+  });
 }
 
 addOdd();
@@ -137,40 +150,30 @@ addOdd();
 
 function calcular() {
   const total = parseFloat(document.getElementById("totalStake").value);
+  const lucroDesejado = parseFloat(document.getElementById("lucroTotal").value) || 0;
   const rows = [...tabela.querySelectorAll("tr")];
   let odds = [];
 
   rows.forEach(r => {
-    const odd = parseFloat(r.children[0].querySelector("input").value);
-    const perc = parseFloat(r.children[1].querySelector("input").value) || 0;
-    if (odd > 1) {
-      const ajustada = odd * (1 + perc / 100);
-      odds.push({ row: r, odd: ajustada });
-      r.querySelector(".oddFinal").innerText = ajustada.toFixed(2);
-    }
+    const odd = parseFloat(r.children[1].querySelector("input").value);
+    if (odd > 1) odds.push({ row: r, odd });
   });
 
-  if (odds.length === 0 || !total) {
-    document.getElementById("resultado").innerText = "";
-    return;
-  }
+  if (!total || odds.length === 0) return;
 
   const soma = odds.reduce((s, o) => s + (1 / o.odd), 0);
-  let lucroMedio = 0;
 
   odds.forEach(o => {
     const stake = total * ((1 / o.odd) / soma);
     const retorno = stake * o.odd;
-    lucroMedio = retorno - total;
+    const lucro = retorno - total + lucroDesejado;
 
-    o.row.querySelector(".stake").innerText =
-      "R$ " + stake.toFixed(2);
-    o.row.querySelector(".lucro").innerText =
-      "R$ " + lucroMedio.toFixed(2);
+    o.row.querySelector(".stake").innerText = "R$ " + stake.toFixed(2);
+
+    const lucroEl = o.row.querySelector(".lucro");
+    lucroEl.innerText = "R$ " + lucro.toFixed(2);
+    lucroEl.className = lucro >= 0 ? "lucro-positivo" : "lucro-negativo";
   });
-
-  document.getElementById("resultado").innerText =
-    `Lucro estimado por cenário: R$ ${lucroMedio.toFixed(2)}`;
 }
 </script>
 </body>
