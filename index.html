@@ -26,8 +26,8 @@ main {
 }
 label {
   font-weight: bold;
-  margin-bottom: 6px;
   display: block;
+  margin-bottom: 6px;
 }
 .input-total {
   display: flex;
@@ -59,6 +59,19 @@ th, td {
 }
 th {
   background: #f1f5f9;
+}
+button {
+  margin-top: 12px;
+  padding: 12px;
+  width: 100%;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+.add {
+  background: #16a34a;
+  color: white;
+  font-size: 16px;
 }
 
 .lucro-positivo { color: green; font-weight: bold; }
@@ -102,6 +115,8 @@ th {
     </thead>
     <tbody id="tabela"></tbody>
   </table>
+
+  <button class="add" onclick="addOdd()">➕ Adicionar odd</button>
 </main>
 
 <script>
@@ -135,10 +150,10 @@ function addOdd() {
     <td class="lucro">-</td>
   `;
   tabela.appendChild(tr);
-  atualizar();
+  atualizarIndices();
 }
 
-function atualizar() {
+function atualizarIndices() {
   [...tabela.querySelectorAll("tr")].forEach((tr, i) => {
     tr.querySelector(".idx").innerText = (i + 1) + "º";
   });
@@ -164,9 +179,7 @@ function calcular() {
   rows.forEach(row => {
     const oddRaw = row.querySelector("input").value;
     const odd = parseFloat(oddRaw.replace(",", "."));
-    if (odd && odd > 1) {
-      odds.push({ row, odd });
-    }
+    if (odd && odd > 1) odds.push({ row, odd });
   });
 
   if (odds.length === 0) return;
