@@ -29,6 +29,18 @@ label {
   margin-bottom: 6px;
   display: block;
 }
+.input-total {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.input-total span {
+  font-size: 26px;
+  font-weight: bold;
+}
+.input-total input {
+  font-size: 22px;
+}
 input {
   width: 100%;
   padding: 10px;
@@ -48,16 +60,6 @@ th, td {
 th {
   background: #f1f5f9;
 }
-button {
-  margin-top: 12px;
-  padding: 12px;
-  width: 100%;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-}
-.add { background: #16a34a; color: white; }
-.remove { background: #dc2626; color: white; }
 
 .lucro-positivo { color: green; font-weight: bold; }
 .lucro-negativo { color: red; font-weight: bold; }
@@ -82,8 +84,11 @@ button {
 </header>
 
 <main>
-  <label>Total de Investimento (R$)</label>
-  <input id="total" placeholder="0,00" oninput="formatMoneyInput(this); calcular()">
+  <label>Total de Investimento</label>
+  <div class="input-total">
+    <span>R$</span>
+    <input id="total" placeholder="0,00" oninput="formatMoney(this); calcular()">
+  </div>
 
   <table>
     <thead>
@@ -93,28 +98,24 @@ button {
         <th>Investimento por Odd</th>
         <th>Retorno Total</th>
         <th>Lucro</th>
-        <th>Ação</th>
       </tr>
     </thead>
     <tbody id="tabela"></tbody>
   </table>
-
-  <button class="add" onclick="addOdd()">➕ Adicionar odd</button>
 </main>
 
 <script>
 const tabela = document.getElementById("tabela");
-const formatter = new Intl.NumberFormat("pt-BR", {
+const br = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL"
 });
 
-function formatMoneyInput(input) {
+function formatMoney(input) {
   let v = input.value.replace(/\D/g, "");
   if (!v) { input.value = ""; return; }
   input.value = (v / 100).toLocaleString("pt-BR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    minimumFractionDigits: 2
   });
 }
 
@@ -132,15 +133,12 @@ function addOdd() {
     <td class="invest">-</td>
     <td class="retorno">-</td>
     <td class="lucro">-</td>
-    <td>
-      <button class="remove" onclick="this.closest('tr').remove(); atualizarIndices(); calcular()">X</button>
-    </td>
   `;
   tabela.appendChild(tr);
-  atualizarIndices();
+  atualizar();
 }
 
-function atualizarIndices() {
+function atualizar() {
   [...tabela.querySelectorAll("tr")].forEach((tr, i) => {
     tr.querySelector(".idx").innerText = (i + 1) + "º";
   });
@@ -152,19 +150,23 @@ addOdd();
 addOdd();
 
 function calcular() {
-  const totalInput = document.getElementById("total").value;
-  if (!totalInput) return;
+  const totalRaw = document.getElementById("total").value;
+  if (!totalRaw) return;
 
-  const total = parseFloat(totalInput.replace(/\./g, "").replace(",", "."));
+  const total = parseFloat(
+    totalRaw.replace(/\./g, "").replace(",", ".")
+  );
   if (!total || total <= 0) return;
 
   const rows = [...tabela.querySelectorAll("tr")];
   const odds = [];
 
-  rows.forEach(r => {
-    const oddVal = r.querySelector("input").value;
-    const odd = parseFloat(oddVal.replace(",", "."));
-    if (odd && odd > 1) odds.push({ row: r, odd });
+  rows.forEach(row => {
+    const oddRaw = row.querySelector("input").value;
+    const odd = parseFloat(oddRaw.replace(",", "."));
+    if (odd && odd > 1) {
+      odds.push({ row, odd });
+    }
   });
 
   if (odds.length === 0) return;
@@ -173,14 +175,20 @@ function calcular() {
   const retornoComum = total / soma;
   const lucro = retornoComum - total;
 
+  rows.forEach(row => {
+    row.querySelector(".invest").innerText = "-";
+    row.querySelector(".retorno").innerText = "-";
+    row.querySelector(".lucro").innerText = "-";
+  });
+
   odds.forEach(o => {
     const investimento = retornoComum / o.odd;
 
-    o.row.querySelector(".invest").innerText = formatter.format(investimento);
-    o.row.querySelector(".retorno").innerText = formatter.format(retornoComum);
+    o.row.querySelector(".invest").innerText = br.format(investimento);
+    o.row.querySelector(".retorno").innerText = br.format(retornoComum);
 
     const lucroEl = o.row.querySelector(".lucro");
-    lucroEl.innerText = formatter.format(lucro);
+    lucroEl.innerText = br.format(lucro);
     lucroEl.className = lucro >= 0 ? "lucro-positivo" : "lucro-negativo";
   });
 }
