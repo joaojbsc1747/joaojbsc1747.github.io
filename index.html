@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calculadora de Odds</title>
+<title>Calculadora de Arbitragem</title>
 
 <style>
 body {
@@ -13,14 +13,14 @@ body {
 }
 header {
   background: #0f172a;
-  color: #fff;
+  color: white;
   padding: 20px;
   text-align: center;
 }
 main {
-  max-width: 1200px;
+  max-width: 1100px;
   margin: 20px auto;
-  background: #fff;
+  background: white;
   padding: 20px;
   border-radius: 10px;
 }
@@ -35,7 +35,7 @@ label {
   gap: 10px;
 }
 .input-total span {
-  font-size: 26px;
+  font-size: 28px;
   font-weight: bold;
 }
 .input-total input {
@@ -47,10 +47,22 @@ input {
   border-radius: 6px;
   border: 1px solid #ccc;
 }
+
+.lucro-box {
+  margin-top: 15px;
+  padding: 15px;
+  border-radius: 8px;
+  font-size: 22px;
+  font-weight: bold;
+  text-align: center;
+}
+.lucro-positivo { background: #dcfce7; color: #166534; }
+.lucro-negativo { background: #fee2e2; color: #991b1b; }
+
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 15px;
+  margin-top: 20px;
 }
 th, td {
   border: 1px solid #e5e7eb;
@@ -60,20 +72,18 @@ th, td {
 th {
   background: #f1f5f9;
 }
+
 button {
-  margin-top: 12px;
+  margin-top: 15px;
   padding: 12px;
   width: 100%;
   border-radius: 8px;
   border: none;
   background: #16a34a;
-  color: #fff;
+  color: white;
   font-size: 16px;
   cursor: pointer;
 }
-
-.lucro-positivo { color: green; font-weight: bold; }
-.lucro-negativo { color: red; font-weight: bold; }
 
 @media (max-width: 768px) {
   table, thead, tbody, th, td, tr { display: block; }
@@ -90,16 +100,18 @@ button {
 
 <body>
 <header>
-  <h1>Calculadora de Odds</h1>
-  <p>Lucro igual em todas as opções</p>
+  <h1>Calculadora de Arbitragem</h1>
+  <p>Trade / Surebet – retorno igual em qualquer resultado</p>
 </header>
 
 <main>
-  <label>Total de Investimento</label>
+  <label>Total Investido</label>
   <div class="input-total">
     <span>R$</span>
     <input id="total" placeholder="0,00" oninput="formatMoney(this); calcular()">
   </div>
+
+  <div id="lucroBox" class="lucro-box" style="display:none;"></div>
 
   <table>
     <thead>
@@ -108,7 +120,6 @@ button {
         <th>Odd</th>
         <th>Investimento por Odd</th>
         <th>Retorno</th>
-        <th>Lucro</th>
       </tr>
     </thead>
     <tbody id="tabela"></tbody>
@@ -119,6 +130,7 @@ button {
 
 <script>
 const tabela = document.getElementById("tabela");
+const lucroBox = document.getElementById("lucroBox");
 const br = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL"
@@ -143,22 +155,21 @@ function addOdd() {
     <td><input placeholder="0,00" oninput="formatOdd(this); calcular()"></td>
     <td class="invest">-</td>
     <td class="retorno">-</td>
-    <td class="lucro">-</td>
   `;
   tabela.appendChild(tr);
   atualizarIndices();
-}
-
-function atualizarIndices() {
-  [...tabela.querySelectorAll("tr")].forEach((tr, i) => {
-    tr.querySelector(".idx").innerText = (i + 1) + "º";
-  });
 }
 
 /* 3 odds padrão */
 addOdd();
 addOdd();
 addOdd();
+
+function atualizarIndices() {
+  [...tabela.querySelectorAll("tr")].forEach((tr, i) => {
+    tr.querySelector(".idx").innerText = (i + 1) + "º";
+  });
+}
 
 function calcular() {
   const totalInput = document.getElementById("total").value;
@@ -184,14 +195,15 @@ function calcular() {
 
   odds.forEach(o => {
     const investimento = retornoComum / o.odd;
-
     o.row.querySelector(".invest").innerText = br.format(investimento);
     o.row.querySelector(".retorno").innerText = br.format(retornoComum);
-
-    const lucroEl = o.row.querySelector(".lucro");
-    lucroEl.innerText = br.format(lucro);
-    lucroEl.className = lucro >= 0 ? "lucro-positivo" : "lucro-negativo";
   });
+
+  lucroBox.style.display = "block";
+  lucroBox.innerText = `Lucro Total: ${br.format(lucro)}`;
+  lucroBox.className = lucro >= 0
+    ? "lucro-box lucro-positivo"
+    : "lucro-box lucro-negativo";
 }
 </script>
 </body>
